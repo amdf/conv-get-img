@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package conv_get_img;
+
+import "google/api/httpbody.proto";
+// import "google/protobuf/timestamp.proto";
+// import "google/protobuf/duration.proto";
+import "google/api/annotations.proto";
+// import "google/protobuf/empty.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/amdf/conv-get-img/svc";
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+    //host: "localhost:3334"
+    info: {
+      title: "Converter - Get Image";
+      version: "1.0";      
+    };
+};
+
+enum FontStyles {
+    NORMAL = 0;
+    ITALIC = 1;
+}
+
+message ConvertRequest {  
+    string input_text = 1 [json_name="input_text"];
+    int32 font_size = 2 [json_name="font_size"];
+    string font_file = 3 [json_name="font_file"];
+    FontStyles font_style = 4 [json_name="font_style"];
+}
+
+message ConvertResponse {
+    string conv_id = 1 [json_name="conv_id"];
+}
+
+message ImageRequest {
+    string conv_id = 1 [json_name="conv_id"];
+}
+
+service ConvGetImage {
+    rpc Convert(ConvertRequest) returns (ConvertResponse);
+    rpc Image(ImageRequest) returns (google.api.HttpBody) {
+		option (google.api.http) = {
+			post: "/v1/image"
+            body: "*"
+		};
+	}
+};
