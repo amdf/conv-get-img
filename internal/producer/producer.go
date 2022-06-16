@@ -27,3 +27,12 @@ func NewAsync() (p sarama.AsyncProducer, err error) {
 	p, err = sarama.NewAsyncProducer(brokers, config)
 	return
 }
+
+func PrepareMessage(topic string, message []byte) (msg *sarama.ProducerMessage) {
+	msg = &sarama.ProducerMessage{
+		Topic:     topic,
+		Partition: -1,
+		Value:     sarama.ByteEncoder(message),
+	}
+	return
+}
