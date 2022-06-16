@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/Shopify/sarama"
+	"github.com/amdf/conv-get-img/internal/producer"
 	pb "github.com/amdf/conv-get-img/svc"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -20,9 +22,27 @@ const (
 
 type ConvGetImageServer struct {
 	pb.UnimplementedConvGetImageServer
+	syncProducer  sarama.SyncProducer
+	asyncProducer sarama.AsyncProducer
 }
 
-//TODO: implement
+func (srv ConvGetImageServer) Convert(context.Context, *pb.ConvertRequest) (resp *pb.ConvertResponse, err error) {
+	resp = &pb.ConvertResponse{ConvId: "some ID here"}
+	return
+}
+
+func MakeConvGetImageServer() (srv *ConvGetImageServer, err error) {
+	srv = &ConvGetImageServer{}
+
+	srv.syncProducer, err = producer.NewSync()
+	if nil != err {
+		return
+	}
+	srv.asyncProducer, err = producer.NewAsync()
+	return
+}
+
+//TODO: implement Image
 
 func (srv ConvGetImageServer) RunGateway() {
 	//TODO: handle errors another way
@@ -85,11 +105,6 @@ func cors(h http.Handler, allowedOrigins []string) http.Handler {
 		}
 		h.ServeHTTP(w, r)
 	})
-}
-
-func MakeConvGetImageServer() (srv *ConvGetImageServer, err error) {
-	srv = &ConvGetImageServer{}
-	return
 }
 
 func main() {
