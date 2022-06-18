@@ -25,9 +25,19 @@ type ConvGetImageServer struct {
 }
 
 func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertRequest) (resp *pb.ConvertResponse, err error) {
-	resp = &pb.ConvertResponse{ConvId: "some ID here"}
-	log.Println("convert Image with len = ", len(req.InputText), "font size", req.FontSize)
-	buf, err1 := json.Marshal(req.InputText) //TODO: convert full struct, make separate struct
+
+	//TODO: make unique stamp from that data:
+	rqdata := ConvertRequestData{
+		InputText: req.InputText,
+		FontSize:  req.FontSize,
+		FontFile:  req.FontFile,
+		FontStyle: FontStyles(req.FontStyle),
+	}
+
+	rq := ConvertRequest{ConvertRequestData: rqdata}
+	rq.ConvID = "TODO: make id here"
+
+	buf, err1 := json.Marshal(rq)
 	if err1 != nil {
 		err = err1
 		log.Println("fail to encode: ", err.Error())
@@ -38,9 +48,14 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 	if err2 != nil {
 		err = err2
 		log.Println("fail to send: ", err.Error())
-	} else {
-		log.Println("send to partition = ", part, "offset = ", offset)
+		return
 	}
+
+	log.Println("convert Image with len = ", len(req.InputText), "font size", req.FontSize)
+	log.Println("send to partition = ", part, "offset = ", offset)
+
+	resp = &pb.ConvertResponse{ConvId: "some ID here"}
+
 	return
 }
 
