@@ -25,8 +25,6 @@ type ConvGetImageServer struct {
 }
 
 func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertRequest) (resp *pb.ConvertResponse, err error) {
-
-	//TODO: make unique stamp from that data:
 	rqdata := ConvertRequestData{
 		InputText: req.InputText,
 		FontSize:  req.FontSize,
@@ -35,7 +33,7 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 	}
 
 	rq := ConvertRequest{ConvertRequestData: rqdata}
-	rq.ConvID = "TODO: make id here"
+	rq.ConvID = rqdata.UniqueID()
 
 	buf, err1 := json.Marshal(rq)
 	if err1 != nil {
@@ -51,10 +49,9 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 		return
 	}
 
-	log.Println("convert Image with len = ", len(req.InputText), "font size", req.FontSize)
-	log.Println("send to partition = ", part, "offset = ", offset)
+	log.Println("convert Image with id = ", rq.ConvID, "send to partition = ", part, "offset = ", offset)
 
-	resp = &pb.ConvertResponse{ConvId: "some ID here"}
+	resp = &pb.ConvertResponse{ConvId: rq.ConvID}
 
 	return
 }

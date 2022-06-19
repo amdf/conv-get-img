@@ -1,5 +1,11 @@
 package server
 
+import (
+	"encoding/base64"
+	"fmt"
+	"hash/crc64"
+)
+
 type FontStyles int32
 
 const (
@@ -18,4 +24,14 @@ type ConvertRequest struct {
 	ConvertRequestData
 
 	ConvID string `json:"conv_id"`
+}
+
+var crctab = crc64.MakeTable(crc64.ISO)
+
+func (cr ConvertRequestData) UniqueID() string {
+	str := fmt.Sprintf("%s%d%s%d", cr.InputText, cr.FontSize, cr.FontFile, cr.FontStyle)
+	crcval := crc64.Checksum([]byte(str), crctab)
+	strval := fmt.Sprint(crcval)
+
+	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString([]byte(strval))
 }
