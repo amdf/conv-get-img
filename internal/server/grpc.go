@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"os"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/amdf/conv-get-img/internal/producer"
@@ -56,9 +58,39 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 	return
 }
 
+var GETIMGTIMEOUT = 3 * time.Second //TODO: move to config
+
 func (srv ConvGetImageServer) Image(ctx context.Context, req *pb.ImageRequest) (body *httpbody.HttpBody, err error) {
-	log.Println("get Image with id = ", req.ConvId)
-	body, err = nil, status.Errorf(codes.Unimplemented, "method Image not implemented")
+	ctx2, cancel := context.WithTimeout(ctx, GETIMGTIMEOUT)
+	defer cancel()
+
+	path := "img/" + req.ConvId + ".png"
+
+	found := make(chan struct{}, 1)
+	go func(s string) {
+		stamp := time.Now()
+		for time.Since(stamp) < GETIMGTIMEOUT {
+			fst, errf := os.Stat(s)
+			if nil == errf && fst.Size() > 0 {
+				found <- struct{}{}
+			} else {
+
+				fst, errf := os.Stat("../" + s)
+				if nil == errf && fst.Size() > 0 {
+					found <- struct{}{}
+				}
+			}
+		}
+	}(path)
+
+	select {
+	case <-ctx2.Done():
+		body, err = nil, status.Errorf(codes.NotFound, "image not found")
+		log.Println("get Image ", path, "not found")
+	case <-found:
+		body = &httpbody.HttpBody{ContentType: "image/png"}
+		log.Println("get Image with id = ", req.ConvId)
+	}
 	return
 }
 

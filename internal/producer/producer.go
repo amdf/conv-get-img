@@ -1,6 +1,10 @@
 package producer
 
-import "github.com/Shopify/sarama"
+import (
+	"log"
+
+	"github.com/Shopify/sarama"
+)
 
 var brokers = []string{
 	"127.0.0.1:9095",
@@ -19,12 +23,19 @@ func newConfig() (config *sarama.Config) {
 func NewSync() (p sarama.SyncProducer, err error) {
 	config := newConfig()
 	p, err = sarama.NewSyncProducer(brokers, config)
+	if nil == err {
+		log.Println("sync connected to kafka brokers")
+	}
+
 	return
 }
 
 func NewAsync() (p sarama.AsyncProducer, err error) {
 	config := newConfig()
 	p, err = sarama.NewAsyncProducer(brokers, config)
+	if nil == err {
+		log.Println("async connected to kafka brokers")
+	}
 	return
 }
 
