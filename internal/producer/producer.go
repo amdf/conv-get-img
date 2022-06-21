@@ -7,9 +7,9 @@ import (
 )
 
 var brokers = []string{
-	"127.0.0.1:9095",
-	"127.0.0.1:9096",
-	"127.0.0.1:9097",
+	":9095",
+	":9096",
+	":9097",
 }
 
 func newConfig() (config *sarama.Config) {

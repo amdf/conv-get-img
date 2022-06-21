@@ -9,6 +9,7 @@
       "name": "ConvGetImage"
     }
   ],
+  "host": "localhost:8082",
   "consumes": [
     "application/json"
   ],

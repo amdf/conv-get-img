@@ -11,7 +11,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/amdf/conv-get-img/svc";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
-    //host: "localhost:3334"
+    host: "localhost:8082"
     info: {
       title: "Converter - Get Image";
       version: "1.0";      
