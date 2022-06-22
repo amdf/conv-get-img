@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+
 	"github.com/amdf/conv-get-img/internal/producer"
 	pb "github.com/amdf/conv-get-img/svc"
 	"google.golang.org/genproto/googleapis/api/httpbody"
@@ -16,7 +17,7 @@ import (
 )
 
 const (
-	SVCRPCADDR  = "0.0.0.0:50052"
+	SVCRPCADDR  = "0.0.0.0:50052" //TODO: to config
 	SVCHTTPADDR = "0.0.0.0:8082"
 )
 
@@ -26,7 +27,15 @@ type ConvGetImageServer struct {
 	asyncProducer sarama.AsyncProducer
 }
 
+func (srv ConvGetImageServer) SaveText(text string) {
+	prepMsg := producer.PrepareMessage("texts", []byte(text))
+	srv.asyncProducer.Input() <- prepMsg
+}
+
 func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertRequest) (resp *pb.ConvertResponse, err error) {
+
+	go srv.SaveText(req.InputText)
+
 	rqdata := ConvertRequestData{
 		InputText: req.InputText,
 		FontSize:  req.FontSize,
@@ -114,5 +123,20 @@ func NewServer() (srv *ConvGetImageServer, err error) {
 		return
 	}
 	srv.asyncProducer, err = producer.NewAsync()
+
+	if nil != err {
+		return
+	}
+
+	go func() {
+		for x := range srv.asyncProducer.Successes() {
+			log.Println("ok write to ", x.Topic, x.Partition, x.Offset)
+		}
+	}()
+	go func() {
+		for x := range srv.asyncProducer.Errors() {
+			log.Println("error write to ", x.Msg.Topic, "-", x.Err.Error())
+		}
+	}()
 	return
 }
