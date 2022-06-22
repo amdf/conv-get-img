@@ -7,9 +7,9 @@ import (
 )
 
 var brokers = []string{
-	"kafka-1:9092",
-	"kafka-2:9092",
-	"kafka-3:9092",
+	"localhost:9095",
+	"localhost:9096",
+	"localhost:9097",
 }
 
 func newConfig() (config *sarama.Config) {

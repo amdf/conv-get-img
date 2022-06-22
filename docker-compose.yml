@@ -1,10 +1,10 @@
 version: '3'
 services:
-  conv-get-img:
-    image: amdf/conv-get-img
-    ports:
-      - 8082:8082
-      - 50052:50052
+  # images:
+  #   image: amdf/conv-get-img
+  #   ports:
+  #     - 8082:8082
+  #     - 50052:50052
   swagger:
     image: swaggerapi/swagger-ui
     ports:
