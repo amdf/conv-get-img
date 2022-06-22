@@ -67,28 +67,40 @@ func (srv ConvGetImageServer) Image(ctx context.Context, req *pb.ImageRequest) (
 	path := "img/" + req.ConvId + ".png"
 
 	found := make(chan struct{}, 1)
-	go func(s string) {
+	go func() {
 		stamp := time.Now()
 		for time.Since(stamp) < GETIMGTIMEOUT {
-			fst, errf := os.Stat(s)
+			fst, errf := os.Stat(path)
 			if nil == errf && fst.Size() > 0 {
 				found <- struct{}{}
 			} else {
 
-				fst, errf := os.Stat("../" + s)
+				fst, errf := os.Stat("../" + path)
 				if nil == errf && fst.Size() > 0 {
+					path = "../" + path
 					found <- struct{}{}
 				}
 			}
 		}
-	}(path)
+	}()
 
 	select {
 	case <-ctx2.Done():
-		body, err = nil, status.Errorf(codes.NotFound, "image not found")
+		err = status.Errorf(codes.NotFound, "image not found")
 		log.Println("get Image ", path, "not found")
+		return
 	case <-found:
-		body = &httpbody.HttpBody{ContentType: "image/png"}
+	}
+
+	imgdata, err := os.ReadFile(path)
+	if err != nil {
+		log.Println("error load Image with id = ", req.ConvId)
+		err = status.Errorf(codes.DataLoss, "load image error")
+	} else {
+		body = &httpbody.HttpBody{
+			ContentType: "image/png",
+			Data:        imgdata,
+		}
 		log.Println("get Image with id = ", req.ConvId)
 	}
 	return
