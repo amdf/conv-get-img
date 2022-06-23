@@ -17,6 +17,7 @@ services:
       - type: bind
         source: ./svc/svc.swagger.json
         target: /swagger.json
+    restart: unless-stopped
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -26,6 +27,11 @@ services:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-1:9092,kafka-2:9092,kafka-3:9092
       - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    depends_on:
+      - kafka-1
+      - kafka-2
+      - kafka-3
+    restart: unless-stopped
 
   zookeeper:
     image: zookeeper
@@ -33,6 +39,7 @@ services:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+    restart: unless-stopped
 
   kafka-1:
     image: wurstmeister/kafka
@@ -50,6 +57,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./kafka_data/500:/kafka
+    depends_on:
+      - zookeeper
+    restart: unless-stopped
 
   kafka-2:
     image: wurstmeister/kafka
@@ -67,6 +77,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./kafka_data/501:/kafka
+    depends_on:
+      - zookeeper
+    restart: unless-stopped
 
   kafka-3:
     image: wurstmeister/kafka
@@ -84,3 +97,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./kafka_data/502:/kafka
+    depends_on:
+      - zookeeper
+    restart: unless-stopped
