@@ -85,13 +85,6 @@ func (srv ConvGetImageServer) Image(ctx context.Context, req *pb.ImageRequest) (
 			fst, errf := os.Stat(path)
 			if nil == errf && fst.Size() > 0 {
 				found <- struct{}{}
-			} else {
-
-				fst, errf := os.Stat("../" + path)
-				if nil == errf && fst.Size() > 0 {
-					path = "../" + path
-					found <- struct{}{}
-				}
 			}
 		}
 	}()
