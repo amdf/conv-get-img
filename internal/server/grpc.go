@@ -67,13 +67,16 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 	return
 }
 
-var GETIMGTIMEOUT = 3 * time.Second //TODO: move to config
+//TODO: move to config
+const imgDir = "/var/tengwar/img"
+
+var GETIMGTIMEOUT = 3 * time.Second
 
 func (srv ConvGetImageServer) Image(ctx context.Context, req *pb.ImageRequest) (body *httpbody.HttpBody, err error) {
 	ctx2, cancel := context.WithTimeout(ctx, GETIMGTIMEOUT)
 	defer cancel()
 
-	path := "img/" + req.ConvId + ".png"
+	path := imgDir + "/" + req.ConvId + ".png"
 
 	found := make(chan struct{}, 1)
 	go func() {
