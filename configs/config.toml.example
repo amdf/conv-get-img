@@ -1,0 +1,21 @@
+[converter]
+host = "localhost"
+port = "50051"
+
+[consumer]
+topic = "convert_requests"
+group = "conv-make-img"
+brokers = ["localhost:9095", "localhost:9096", "localhost:9097"]
+verbose = false
+
+[server]
+host = "localhost"
+port = "50052"
+
+[gateway]
+host = "localhost"
+port = "8082"
+
+[storage]
+path = "/var/tengwar/img"
+timeout = "3s"

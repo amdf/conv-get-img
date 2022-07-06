@@ -9,16 +9,12 @@ import (
 
 	"github.com/Shopify/sarama"
 
+	"github.com/amdf/conv-get-img/internal/config"
 	"github.com/amdf/conv-get-img/internal/producer"
 	pb "github.com/amdf/conv-get-img/svc"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-)
-
-const (
-	SVCRPCADDR  = "0.0.0.0:50052" //TODO: to config
-	SVCHTTPADDR = "0.0.0.0:8082"
 )
 
 type ConvGetImageServer struct {
@@ -67,21 +63,22 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 	return
 }
 
-//TODO: move to config
-const imgDir = "/var/tengwar/img"
-
-var GETIMGTIMEOUT = 3 * time.Second
-
 func (srv ConvGetImageServer) Image(ctx context.Context, req *pb.ImageRequest) (body *httpbody.HttpBody, err error) {
-	ctx2, cancel := context.WithTimeout(ctx, GETIMGTIMEOUT)
+	var timeout time.Duration
+	timeout, err = time.ParseDuration(config.Get().Storage.Timeout)
+	if err != nil {
+		return
+	}
+
+	ctx2, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	path := imgDir + "/" + req.ConvId + ".png"
+	path := config.Get().Storage.Path + "/" + req.ConvId + ".png"
 
 	found := make(chan struct{}, 1)
 	go func() {
 		stamp := time.Now()
-		for time.Since(stamp) < GETIMGTIMEOUT {
+		for time.Since(stamp) < timeout {
 			fst, errf := os.Stat(path)
 			if nil == errf && fst.Size() > 0 {
 				found <- struct{}{}

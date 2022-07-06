@@ -3,6 +3,7 @@ module github.com/amdf/conv-get-img
 go 1.17
 
 require (
+	github.com/BurntSushi/toml v1.1.0
 	github.com/Shopify/sarama v1.34.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/amdf/conv-get-img/internal/config"
 	pb "github.com/amdf/conv-get-img/svc"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -54,7 +55,7 @@ func (srv ConvGetImageServer) RunGateway() {
 
 	conn, err := grpc.DialContext(
 		ctx,
-		SVCRPCADDR,
+		config.GetServerAddress(),
 		//grpc.WithInsecure(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
@@ -67,9 +68,9 @@ func (srv ConvGetImageServer) RunGateway() {
 		log.Fatalln("fail to register http", err)
 	}
 
-	log.Println("starting http server at ", SVCHTTPADDR)
+	log.Println("starting http server at ", config.GetGatewayAddress())
 	gatewayServer := &http.Server{
-		Addr:    SVCHTTPADDR,
+		Addr:    config.GetGatewayAddress(),
 		Handler: cors(mux, allowedOrigins),
 	}
 	// Start HTTP server (and proxy calls to gRPC server endpoint)

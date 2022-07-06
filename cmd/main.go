@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/amdf/conv-get-img/internal/config"
 	"github.com/amdf/conv-get-img/internal/server"
 	pb "github.com/amdf/conv-get-img/svc"
 	"google.golang.org/grpc"
@@ -11,12 +12,16 @@ import (
 
 func main() {
 
+	if errload := config.Load(); errload != nil {
+		log.Fatal("unable to load configs/config.toml: ", errload.Error())
+	}
+
 	srv, err := server.NewServer()
 	if err != nil {
 		log.Fatalln("fail to create server", err)
 	}
 
-	lis, err := net.Listen("tcp", server.SVCRPCADDR)
+	lis, err := net.Listen("tcp", config.GetServerAddress())
 	if err != nil {
 		log.Fatalln("fail to listen", err)
 	}
