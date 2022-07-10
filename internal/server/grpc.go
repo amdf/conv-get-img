@@ -13,6 +13,7 @@ import (
 	"github.com/amdf/conv-get-img/internal/config"
 	"github.com/amdf/conv-get-img/internal/producer"
 	pb "github.com/amdf/conv-get-img/svc"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,7 +34,9 @@ func (srv ConvGetImageServer) SaveText(ctx opentracing.SpanContext, text string)
 }
 
 func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertRequest) (resp *pb.ConvertResponse, err error) {
+
 	tr := opentracing.GlobalTracer().StartSpan("Convert")
+	tags.SpanKindProducer.Set(tr)
 	defer tr.Finish()
 
 	go srv.SaveText(tr.Context(), req.InputText)
