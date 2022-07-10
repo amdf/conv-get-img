@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/amdf/conv-get-img/internal/config"
 	"github.com/amdf/conv-get-img/internal/producer"
@@ -23,14 +24,19 @@ type ConvGetImageServer struct {
 	asyncProducer sarama.AsyncProducer
 }
 
-func (srv ConvGetImageServer) SaveText(text string) {
+func (srv ConvGetImageServer) SaveText(ctx opentracing.SpanContext, text string) {
+	tr := opentracing.GlobalTracer().StartSpan(
+		"SaveText", opentracing.ChildOf(ctx))
+	defer tr.Finish()
 	prepMsg := producer.PrepareMessage("texts", []byte(text))
 	srv.asyncProducer.Input() <- prepMsg
 }
 
 func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertRequest) (resp *pb.ConvertResponse, err error) {
+	tr := opentracing.GlobalTracer().StartSpan("Convert")
+	defer tr.Finish()
 
-	go srv.SaveText(req.InputText)
+	go srv.SaveText(tr.Context(), req.InputText)
 
 	rqdata := ConvertRequestData{
 		InputText: req.InputText,
@@ -64,6 +70,9 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 }
 
 func (srv ConvGetImageServer) Image(ctx context.Context, req *pb.ImageRequest) (body *httpbody.HttpBody, err error) {
+	tr := opentracing.GlobalTracer().StartSpan("Image")
+	defer tr.Finish()
+
 	var timeout time.Duration
 	timeout, err = time.ParseDuration(config.Get().Storage.Timeout)
 	if err != nil {
