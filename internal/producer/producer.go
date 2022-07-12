@@ -17,6 +17,7 @@ func newConfig() (config *sarama.Config) {
 	config.Producer.Partitioner = sarama.NewRandomPartitioner
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Return.Successes = true
+	config.Version = sarama.V1_0_0_0
 	return
 }
 
@@ -39,11 +40,14 @@ func NewAsync() (p sarama.AsyncProducer, err error) {
 	return
 }
 
-func PrepareMessage(topic string, message []byte) (msg *sarama.ProducerMessage) {
+func PrepareMessage(topic string, message []byte, meta map[string]string) (msg *sarama.ProducerMessage) {
 	msg = &sarama.ProducerMessage{
 		Topic:     topic,
 		Partition: -1,
 		Value:     sarama.ByteEncoder(message),
+	}
+	for k, v := range meta {
+		msg.Headers = append(msg.Headers, sarama.RecordHeader{Key: []byte(k), Value: []byte(v)})
 	}
 	return
 }

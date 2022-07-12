@@ -29,7 +29,7 @@ func (srv ConvGetImageServer) SaveText(ctx opentracing.SpanContext, text string)
 	tr := opentracing.GlobalTracer().StartSpan(
 		"SaveText", opentracing.ChildOf(ctx))
 	defer tr.Finish()
-	prepMsg := producer.PrepareMessage("texts", []byte(text))
+	prepMsg := producer.PrepareMessage("texts", []byte(text), nil)
 	srv.asyncProducer.Input() <- prepMsg
 }
 
@@ -57,7 +57,11 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 		log.Println("fail to encode: ", err.Error())
 		return
 	}
-	prepMsg := producer.PrepareMessage("convert_requests", buf)
+
+	spanmeta := make(opentracing.TextMapCarrier)
+	opentracing.GlobalTracer().Inject(tr.Context(), opentracing.TextMap, spanmeta)
+
+	prepMsg := producer.PrepareMessage("convert_requests", buf, spanmeta)
 	part, offset, err2 := srv.syncProducer.SendMessage(prepMsg)
 	if err2 != nil {
 		err = err2
