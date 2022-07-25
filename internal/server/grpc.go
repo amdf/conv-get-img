@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/amdf/conv-get-img/internal/config"
 	"github.com/amdf/conv-get-img/internal/producer"
 	pb "github.com/amdf/conv-get-img/svc"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,14 +25,21 @@ type ConvGetImageServer struct {
 	asyncProducer sarama.AsyncProducer
 }
 
-func (srv ConvGetImageServer) SaveText(text string) {
-	prepMsg := producer.PrepareMessage("texts", []byte(text))
+func (srv ConvGetImageServer) SaveText(ctx opentracing.SpanContext, text string) {
+	tr := opentracing.GlobalTracer().StartSpan(
+		"SaveText", opentracing.ChildOf(ctx))
+	defer tr.Finish()
+	prepMsg := producer.PrepareMessage("texts", []byte(text), nil)
 	srv.asyncProducer.Input() <- prepMsg
 }
 
 func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertRequest) (resp *pb.ConvertResponse, err error) {
 
-	go srv.SaveText(req.InputText)
+	tr := opentracing.GlobalTracer().StartSpan("Convert")
+	tags.SpanKindProducer.Set(tr)
+	defer tr.Finish()
+
+	go srv.SaveText(tr.Context(), req.InputText)
 
 	rqdata := ConvertRequestData{
 		InputText: req.InputText,
@@ -48,7 +57,11 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 		log.Println("fail to encode: ", err.Error())
 		return
 	}
-	prepMsg := producer.PrepareMessage("convert_requests", buf)
+
+	spanmeta := make(opentracing.TextMapCarrier)
+	opentracing.GlobalTracer().Inject(tr.Context(), opentracing.TextMap, spanmeta)
+
+	prepMsg := producer.PrepareMessage("convert_requests", buf, spanmeta)
 	part, offset, err2 := srv.syncProducer.SendMessage(prepMsg)
 	if err2 != nil {
 		err = err2
@@ -64,6 +77,9 @@ func (srv ConvGetImageServer) Convert(ctx context.Context, req *pb.ConvertReques
 }
 
 func (srv ConvGetImageServer) Image(ctx context.Context, req *pb.ImageRequest) (body *httpbody.HttpBody, err error) {
+	tr := opentracing.GlobalTracer().StartSpan("Image")
+	defer tr.Finish()
+
 	var timeout time.Duration
 	timeout, err = time.ParseDuration(config.Get().Storage.Timeout)
 	if err != nil {

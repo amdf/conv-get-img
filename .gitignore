@@ -1,4 +1,4 @@
 .vscode/**
 img/**
 kafka_data/**
-*.toml
+configs/*.toml
